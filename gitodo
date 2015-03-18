@@ -1,5 +1,8 @@
 #!/bin/sh
 
+TMPFILE=$(mktemp /tmp/gitodo.XXXXXX)
+trap 'rm -f $TMPFILE' EXIT
+
 function error()
 {
 	echo "Error: $1"
@@ -9,7 +12,7 @@ function error()
 function success()
 {
 	echo $1
-	echo "$commit_message$1" >> gitodo.tmpfile
+	echo "${commit_message}$1" >> ${TMPFILE}
 }
 
 create_file()
@@ -220,8 +223,8 @@ function show()
 function write()
 {
 	if ! flag_exists "-h" && ! flag_exists "--hold"; then
-		commit_message=$(cat "gitodo.tmpfile")
-		rm gitodo.tmpfile
+		commit_message=$(<"${TMPFILE}")
+		rm ${TMPFILE}
 		response=$(git pull origin master)
 		response=$(git add --all && git commit -m "$commit_message" && git push origin master)
 	fi
