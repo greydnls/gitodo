@@ -71,9 +71,9 @@ function create()
 		error "File name must be specified"
 	elif [ -a "${a[1]}.md" ]; then
 		error "Requested File already exists."
-	else
-		create_file ${a[1]}
 	fi
+	file_is_in_gitdir
+	create_file ${a[1]}
 }
 
 function todo_exists()
@@ -132,22 +132,18 @@ function todo_is_complete()
 
 function complete()
 {
-	if [ -a "${a[1]}.md" ]; then
-		content=$(cat "${a[1]}.md")
-		if todo_exists "${a[2]}"; then
-			if todo_is_complete "${a[2]}"; then
-				error "Todo is already complete"
-			else
-				echo "${content/"- [ ] ${a[2]}"/- [x] ${a[2]} }" > "${a[1]}.md"
-				success "${a[2]} marked as complete"
-			fi
+  file_exists
+	content=$(<"${a[1]}.md")
+	if todo_exists "${a[2]}"; then
+		if todo_is_complete "${a[2]}"; then
+			error "Todo is already complete"
 		else
-			error "Todo ${a[2]} does not exist"
+			echo "${content/"- [ ] ${a[2]}"/- [x] ${a[2]} }" > "${a[1]}.md"
+			success "${a[2]} marked as complete"
 		fi
 	else
-		error "Requested List '${a[1]}' does not exist"
+		error "Todo ${a[2]} does not exist"
 	fi
-
 }
 
 function sublist_exists()
@@ -207,17 +203,15 @@ function should_be_shown()
 
 function show()
 {
-	if [ -z ${a[1]} ]; then
-    		error "Filename must be specified"
-	elif [ -a "${a[1]}.md" ]; then
-		while read line; do
-			if should_be_shown "$line"; then
-	            echo "$line"
-			fi
-        done < ${a[1]}.md
-	else
-		error "Requested File ${a[1]} doesn't exist"
+	if [ -z "${a[1]}" ]; then
+		error "Filename must be specified"
 	fi
+	file_exists
+	while read line; do
+		if should_be_shown "$line"; then
+			echo "$line"
+		fi
+	done < "${a[1]}.md"
 }
 
 function write()
@@ -228,6 +222,31 @@ function write()
 		response=$(git pull origin master)
 		response=$(git add --all && git commit -m "$commit_message" && git push origin master)
 	fi
+}
+
+# This checks that the directory your todo file is in is the same as
+# the git repository that you are currently working in. It does *not*
+# check that the todo file actually exists, that is handled by file_exists()
+function file_is_in_gitdir()
+{
+  file_name=$(readlink -f "${a[1]}.md")
+  directory=$(dirname "$file_name")
+  git_repo=$(git rev-parse --show-toplevel)
+  if [[ ! $directory =~ $git_repo ]]; then
+    error "Todo file must be located within the current git repo: ${git_repo}"
+  fi
+}
+
+# Check to see if the file containing your todo list exists and exits the script
+# with an error if it does not. As such, it is not suitable for use any time the
+# file existing is not a fatal error.
+function file_exists()
+{
+  if [[ ! -a ${a[1]}.md ]]; then
+    error "Requested list ${a[1]} doesn't exist"
+  fi
+  file_is_in_gitdir # We should also check this whenever we're looking to see if
+                    # the file exists, though not vice-versa
 }
 
 a=("$@")
