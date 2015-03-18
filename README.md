@@ -24,10 +24,10 @@ Gitodo supports sublists inside lists, as well as list/sublist creation, checkin
 - [x] Viewing a List
 `gitodo show FileName`
 
-- [x] Viewing only undone todos:   
+- [x] Viewing only uncompleted todos:
 `gitodo show FileName --open`
 
-- [x] Viewing only undone todos:   
+- [x] Viewing only completed todos:
 `gitodo show FileName --done`
 
 #### The -f flag
@@ -38,7 +38,7 @@ If you could like a command to pertain to a sublist only during either `show` or
 
 **Example**: `gitodo show FileName -s "Sublist Name" `
 
-If you would like to create a new Todo List with a sublist you can add the -s flag to add a the default **General** sublist to the file. You can also add an argument after the -s flag to provide a custom sublist name. 
+If you would like to create a new Todo List with a sublist you can add the -s flag to add the default **General** sublist to the file. You can also add an argument after the -s flag to provide a custom sublist name.
 
 **Example**: `gitodo create FileName -s //adds General sublist`
 
