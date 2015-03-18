@@ -14,10 +14,10 @@ create_file()
 
 function create_sublist()
 {
-	echo "
+		echo "
 
 ### $1" >> $2.md
-	echo "Sublist Created $1 in list $2"
+        	echo "Sublist Created $1 in list $2"
 }
 
 function find_flag_index()
@@ -50,23 +50,54 @@ function create()
 		if flag_exists "-s"; then
 			find_flag_index "-s"
 			if [ -z "${a[$idx]}" ]; then
-				create_sublist "General" ${a[1]}
+				create_sublist "General" $1
 			else
-				create_sublist "${a[$idx]}" ${a[1]}
+				create_sublist "${a[$idx]}" $1
 			fi
 		fi
 	fi
 }
 
+function todo_exists()
+{
+	if [[ $content == *"$1"* ]]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
 function add_todo()
 {
-	echo "- [ ] $1" >> $2.md
-	echo "Todo successfully added"
+	content=$(cat "${a[1]}.md")
+	if todo_exists "$1"; then
+		if flag_exists "-f" || flag_exists "--force"; then
+			echo "- [ ] $1" >> $2.md
+			echo "Todo successfully added"
+		elif todo_is_complete "${a[2]}"; then
+			error "Todo already exists and is already complete. To add it anyway, add the -f Flag"
+		else
+			error "Todo already exists. To add it anyway, add the -f Flag"
+		fi
+	else
+		if flag_exists "-s"; then
+			find_flag_index "-s"
+			if [ "${a[$idx]}" ]; then
+				echo "- [ ] $1" >> $2.md
+				echo "Todo successfully added"
+			else
+				create_sublist "${a[$idx]}" $1
+				echo "- [ ] $1
+				" >> $2.md
+				echo "Todo successfully added"
+			fi
+		fi
+	fi
 }
 
 function todo()
 {
-	if [ -z ${a[1]} ] || [ -z ${a[2]} ]; then
+	if [ -z ${a[1]} ] || [ -z "${a[2]}" ]; then
 		error "Filename and todo must be specified"
 	elif [ -a "${a[1]}.md" ]; then
 		add_todo "${a[2]}" ${a[1]}
@@ -79,15 +110,6 @@ function todo()
 		fi
 	fi
 	exit 0
-}
-
-function todo_exists()
-{
-	if [[ $content == *"$1"* ]]; then
-		return 0
-	else
-		return 1
-	fi
 }
 
 function todo_is_complete()
@@ -149,9 +171,40 @@ function sublist()
 	fi
 }
 
+function should_be_shown()
+{
+	if flag_exists "--done"; then
+		if [[ $1 == *"- [x]"* ]] || [[ $1 == *"### "* ]]; then
+			return 0
+		else
+			return 1
+		fi
+	elif flag_exists "--open"; then
+		if [[ $1 == *"- [ ]"* ]] || [[ $1 == *"### "* ]]; then
+			return 0
+		else
+			return 1
+		fi
+	elif [[ $1 == *"- [x]"* ]] || [[ $1 == *"- [ ]"* ]] || [[ $1 == *"### "* ]]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
 function show()
 {
-	exit 0
+	if [ -z ${a[1]} ]; then
+    		error "Filename must be specified"
+	elif [ -a "${a[1]}.md" ]; then
+		while read line; do
+			if should_be_shown "$line"; then
+	            echo "$line"
+			fi
+        done < ${a[1]}.md
+	else
+		error "Requested File ${a[1]} doesn't exist"
+	fi
 }
 
 a=("$@")
@@ -169,7 +222,7 @@ case $1 in
 		sublist
 		;;
 	show)
-		echo "list"
+		show
 		;;
 	*)
 		echo $"Usage: $0 {create|add|complete|show|todo}"

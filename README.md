@@ -21,13 +21,13 @@ Gitodo supports sublists inside lists, as well as list/sublist creation, checkin
 - [x] Creating a sublist:  
 `gitodo sublist FileName "Sublist Name"`
 
-- [ ] Viewing a List  
+- [x] Viewing a List  
 `gitodo show FileName`
 
-- [ ] Viewing only undone todos:   
+- [x] Viewing only undone todos:   
 `gitodo show FileName --open`
 
-- [ ] Viewing only undone todos:   
+- [x] Viewing only undone todos:   
 `gitodo show FileName --done`
 
 #### The -f flag
@@ -44,6 +44,14 @@ If you would like to create a new Todo List with a sublist you can add the -s fl
 
 **With Custom Sublist:**  `gitodo create FileName -s "My Nifty List Name"` 
 
-#### The -a flag 
-If you would like to show all todos, from all lists you can use the -a or --all flag.   
-**Show all todos:** `gitodo show --all`
+###Upcoming Features
+
+- [ ] Support for Due Dates 
+
+- [ ] View due todos  
+`gitodo show --due`
+
+- [ ] View past due todos  
+`gitodo show --past-due` 
+- [ ] Add multiple, todos at once   
+- [x] Warn when todo already exists
