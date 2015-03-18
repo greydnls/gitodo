@@ -56,18 +56,22 @@ function create()
 	fi
 }
 
+function add_todo()
+{
+	echo "- [] $1" >> $2.md
+	echo "Todo successfully added"
+}
+
 function todo()
 {
 	if [ -z ${a[1]} ] || [ -z ${a[2]} ]; then
 		error "Filename and todo must be specified"
 	elif [ -a "${a[1]}.md" ]; then
-		echo "- [ ] ${a[2]}" >> ${a[1]}.md
-		echo "Todo successfully added"
+		add_todo ${a[2]}" ${a[1]}
 	else
 		if flag_exists "-f" || flag_exists "--force"; then
 			create
-			echo "- [ ] ${a[2]}" >> ${a[1]}.md
-			echo "Todo successfully added"
+			add_todo ${a[2]}" ${a[1]}
 		else
 			error "File does not exist. To force file creation, add the -f Flag"
 		fi
@@ -102,7 +106,7 @@ function complete()
 			if todo_is_complete "${a[2]}"; then
 				error "Todo is already complete"
 			else
-				echo "${content/"- [ ] ${a[2]}"/- [x] ${a[2]} }" > "${a[1]}.md"
+				echo "${content/"- [] ${a[2]}"/- [x] ${a[2]} }" > "${a[1]}.md"
 				echo "${a[2]} successfully marked as complete"
 			fi
 		else

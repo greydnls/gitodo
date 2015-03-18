@@ -18,16 +18,16 @@ Gitodo supports sublists inside lists, as well as list/sublist creation, checkin
 - [x] Checking off a todo item  
 `gitodo complete FileName "Take Over The World" `
 
-- [  ]Creating a sublist:  
+- [ ]Creating a sublist:  
 `gitodo sublist FileName "Sublist Name"`
 
-- [  ] Viewing a List  
+- [ ] Viewing a List  
 `gitodo show FileName`
 
-- [  ] Viewing only undone todos:   
+- [ ] Viewing only undone todos:   
 `gitodo show FileName --open`
 
-- [  ] Viewing only undone todos:   
+- [ ] Viewing only undone todos:   
 `gitodo show FileName --done`
 
 #### The -f flag
