@@ -59,7 +59,7 @@ gitodo create NewList -s "Nifty Sublist" // This will commit itself and the two 
 Make gitodo executable, and move to a useable place. 
 
 ```
-chmod +x gitodo && mv gitodo /usr/local/bin/gitodo
+chmod +x gitodo && mv gitodo /usr/local/bin/
 ```
 
 Gitodo is not able to be used from inside any git repo you like. 
