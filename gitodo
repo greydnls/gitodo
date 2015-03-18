@@ -116,7 +116,7 @@ function todo()
 			create_sublist_from_flag ${a[1]}
 			add_todo "${a[2]}" ${a[1]}
 		else
-			error "File does not exist. To force file creation, add the -f Flag"
+			error "File does not exist. To force file creation, add the -f flag"
 		fi
 	fi
 }
