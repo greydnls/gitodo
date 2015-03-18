@@ -1,0 +1,114 @@
+#!/bin/sh
+
+function error()
+{
+	echo "Error: $1"
+	exit
+}
+
+create_file()
+{
+	echo "# $1" >> $1.md
+	echo "File Creation Complete. $1.md created"
+}
+
+function create_sublist()
+{
+	echo "### $1" >> $2.md
+	echo "Sublist Created $1 in list $2"
+}
+
+function find_flag_index()
+{
+	for i in "${!a[@]}" ; do
+		if [ "${a[$i]}" = $1 ]; then
+			idx=$(($i+1))
+		fi
+	done
+}
+
+function flag_exists()
+{
+	for i in "${!a[@]}" ; do
+		if [ "${a[$i]}" = $1 ]; then
+			return 0
+		fi
+	done
+	return 1
+}
+
+function create()
+{
+	if [ -z ${a[1]} ]; then
+		error "File name must be specified"
+	elif [ -a "${a[1]}.md" ]; then
+		error "Requested File already exists."
+	else
+		create_file ${a[1]}
+		if flag_exists "-s" || flag_exists "--sublist"; then
+			find_flag_index "-s"
+			if [ -z "${a[$idx]}"]; then
+				create_sublist "General" ${a[1]}
+			else
+				create_sublist "${a[$idx]}" ${a[1]}
+			fi
+		fi
+	fi
+}
+
+function todo()
+{
+	if [ -z ${a[1]} ] || [ -z ${a[2]} ]; then
+		error "Filename and todo must be specified"
+	elif [ -a "${a[1]}.md" ]; then
+		echo "- [ ] ${a[2]}" >> ${a[1]}.md
+		echo "Todo successfully added"
+	else
+		if flag_exists "-f"; then
+			find_flag_index "-f"
+			create
+			echo "- [ ] ${a[2]}" >> ${a[1]}.md
+			echo "Todo successfully added"
+		else
+			error "File does not exist. To force file creation, add the -f Flag"
+		fi
+	fi
+	exit 0
+}
+
+function complete()
+{
+	exit 0
+}
+
+function sublist()
+{
+	exit 0
+}
+
+function show()
+{
+	exit 0
+}
+
+a=("$@")
+case $1 in
+	create)
+		create
+		;;
+	todo)
+		todo
+		;;
+	complete)
+		echo "list"
+		;;
+	sublist)
+		echo "list"
+		;;
+	show)
+		echo "list"
+		;;
+	*)
+		echo $"Usage: $0 {create|add|complete|show|todo}"
+		exit 0
+esac

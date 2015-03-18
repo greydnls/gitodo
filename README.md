@@ -9,30 +9,38 @@ Gitodo supports sublists inside lists, as well as list/sublist creation, checkin
 
 ###Usage
 
-Create a new list    
+X Create a new list    
 `gitodo create FileName`
 
 Add a new Todo to a list    
-`gitodo add FileName "Take Over The World"`
-
-For convenience, you can also create a new list in the process of adding the todo:  
-`gitodo add FileName "Take Over The World" -f`
+`gitodo todo FileName "Take Over The World"`
 
 Checking off a todo item
 `gitodo complete FileName "Take Over The World" `
 
 Creating a sublist:  
-`gitodo add FileName "TakeOver The World" ` -l="Sublist Name"`
+`gitodo sublist FileName "Sublist Name"`
 
 Viewing a List  
 `gitodo show FileName`
 
-Viewing a single sublist only  
-`gitodo show FileName -l="Sublist Name"`
+Viewing only undone todos:   
+`gitodo show FileName --open`
 
 Viewing only undone todos:   
-`gitodo todo FileName`
+`gitodo show FileName --done`
 
-Viewing undone todos from a sublist:   
-`gitodo todo FileName -l="Sublist Name"`
+#### The -f flag
+By default Gitodo will throw errors if you attempt to add a todo to a file that does not exist, or to a sublist that does not exist in a file. Adding the -f flag, (or --force) will suppress the errors and create the file or sublist as necessary. 
+
+#### The -s flag
+If you could like a command to pertain to a sublist only during either `show` or `todo` commands, you may add the -s flag ( or --sublist), with the list name to follow.   
+
+**Example**: `gitodo show FileName -s "Sublist Name" `
+
+If you would like to create a new Todo List with a sublist you can add the -s flag to add a the default **General** sublist to the file. You can also add an argument after the -s flag to provide a custom sublist name. 
+
+**Example**: `gitodo create FileName -s //adds General sublist`
+
+**With Custom Sublist:**  `gitodo create FileName -s "My Nifty List Name"` 
 
