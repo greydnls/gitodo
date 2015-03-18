@@ -272,6 +272,13 @@ case $1 in
 		show
 		;;
 	*)
-		echo $"Usage: $0 {create|add|complete|show|todo}"
+		echo $"Usage: $0 <create|todo|complete|show|sublist> [--open | --done]"
+		echo ""
+		echo "Examples:"
+		echo "         gitodo create MyFile"
+		echo "         gitodo todo MyFile 'Take Over The World'"
+		echo "         gitodo show MyFile --open"
+		echo "         gitodo complete MyFile 'Take Over The World'"
+		echo "         gitodo sublist MyFile 'Sublist Name'"
 		exit 0
 esac
