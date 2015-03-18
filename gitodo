@@ -58,7 +58,7 @@ function create()
 
 function add_todo()
 {
-	echo "- [] $1" >> $2.md
+	echo "- [ ] $1" >> $2.md
 	echo "Todo successfully added"
 }
 
@@ -106,7 +106,7 @@ function complete()
 			if todo_is_complete "${a[2]}"; then
 				error "Todo is already complete"
 			else
-				echo "${content/"- [] ${a[2]}"/- [x] ${a[2]} }" > "${a[1]}.md"
+				echo "${content/"- [ ] ${a[2]}"/- [x] ${a[2]} }" > "${a[1]}.md"
 				echo "${a[2]} successfully marked as complete"
 			fi
 		else
