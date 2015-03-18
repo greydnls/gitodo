@@ -50,7 +50,7 @@ function flag_exists()
 
 function create_sublist_from_flag()
 {
-	content=$(cat "${a[1]}.md")
+	content=$(<"${a[1]}.md")
 	if flag_exists "-s"; then
 		find_flag_index "-s"
 		if [ -z "${a[$idx]}" ]; then
@@ -87,7 +87,7 @@ function todo_exists()
 
 function add_todo()
 {
-	content=$(cat "${a[1]}.md")
+	content=$(<"${a[1]}.md")
 	if todo_exists "$1"; then
 		if flag_exists "-f" || flag_exists "--force"; then
 			echo "- [ ] $1" >> $2.md
@@ -164,7 +164,7 @@ function sublist()
 	if [ -z ${a[1]} ] || [ -z "${a[2]}" ]; then
 		error "Filename and sublist must be specified"
 	elif [ -a "${a[1]}.md" ]; then
-		content=$(cat "${a[1]}.md")
+		content=$(<"${a[1]}.md")
 		if sublist_exists ${a[2]}; then
 			if flag_exists "-f" || flag_exists "--force"; then
 				create_sublist "${a[2]}" ${a[1]}
