@@ -45,9 +45,9 @@ function create()
 		error "Requested File already exists."
 	else
 		create_file ${a[1]}
-		if flag_exists "-s" || flag_exists "--sublist"; then
+		if flag_exists "-s"; then
 			find_flag_index "-s"
-			if [ -z "${a[$idx]}"]; then
+			if [ -z "${a[$idx]}" ]; then
 				create_sublist "General" ${a[1]}
 			else
 				create_sublist "${a[$idx]}" ${a[1]}
@@ -64,8 +64,7 @@ function todo()
 		echo "- [ ] ${a[2]}" >> ${a[1]}.md
 		echo "Todo successfully added"
 	else
-		if flag_exists "-f"; then
-			find_flag_index "-f"
+		if flag_exists "-f" || flag_exists "--force"; then
 			create
 			echo "- [ ] ${a[2]}" >> ${a[1]}.md
 			echo "Todo successfully added"
@@ -76,14 +75,48 @@ function todo()
 	exit 0
 }
 
+function todo_exists()
+{
+	return 0
+	if echo "$content" | grep -q "$1"; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+function todo_is_complete()
+{
+	if [[ $content == *"[x] $1"* ]]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
 function complete()
 {
-	exit 0
+	if [ -a "${a[1]}.md" ]; then
+		content=$(cat "${a[1]}.md")
+		if todo_exists "${a[2]}"; then
+			if todo_is_complete "${a[2]}"; then
+				error "Todo is already complete"
+			else
+				echo "${content/"- [ ] ${a[2]}"/- [x] ${a[2]} }" > "${a[1]}.md"
+				echo "${a[2]} successfully marked as complete"
+			fi
+		else
+			error "Todo ${a[2]} does not exist"
+		fi
+	else
+		error "Requested List '${a[1]}' does not exist"
+	fi
+
 }
 
 function sublist()
 {
-	exit 0
+	echo ${a[@]}
 }
 
 function show()
@@ -100,10 +133,10 @@ case $1 in
 		todo
 		;;
 	complete)
-		echo "list"
+		complete
 		;;
 	sublist)
-		echo "list"
+		sublist
 		;;
 	show)
 		echo "list"
