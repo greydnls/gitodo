@@ -18,7 +18,7 @@ Gitodo supports sublists inside lists, as well as list/sublist creation, checkin
 - [x] Checking off a todo item  
 `gitodo complete FileName "Take Over The World" `
 
-- [ ] Creating a sublist:  
+- [x] Creating a sublist:  
 `gitodo sublist FileName "Sublist Name"`
 
 - [ ] Viewing a List  

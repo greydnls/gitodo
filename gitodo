@@ -14,7 +14,9 @@ create_file()
 
 function create_sublist()
 {
-	echo "### $1" >> $2.md
+	echo "
+
+### $1" >> $2.md
 	echo "Sublist Created $1 in list $2"
 }
 
@@ -67,11 +69,11 @@ function todo()
 	if [ -z ${a[1]} ] || [ -z ${a[2]} ]; then
 		error "Filename and todo must be specified"
 	elif [ -a "${a[1]}.md" ]; then
-		add_todo ${a[2]}" ${a[1]}
+		add_todo "${a[2]}" ${a[1]}
 	else
 		if flag_exists "-f" || flag_exists "--force"; then
 			create
-			add_todo ${a[2]}" ${a[1]}
+			add_todo "${a[2]}" ${a[1]}
 		else
 			error "File does not exist. To force file creation, add the -f Flag"
 		fi
@@ -81,8 +83,7 @@ function todo()
 
 function todo_exists()
 {
-	return 0
-	if echo "$content" | grep -q "$1"; then
+	if [[ $content == *"$1"* ]]; then
 		return 0
 	else
 		return 1
@@ -118,9 +119,34 @@ function complete()
 
 }
 
+function sublist_exists()
+{
+	if [[ $content == *"### $1"* ]]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
 function sublist()
 {
-	echo ${a[@]}
+	if [ -z ${a[1]} ] || [ -z ${a[2]} ]; then
+		error "Filename and sublist must be specified"
+	elif [ -a "${a[1]}.md" ]; then
+		content=$(cat "${a[1]}.md")
+		if sublist_exists ${a[2]}; then
+    		error "Sublist ${a[2]} already exists"
+		else
+			create_sublist ${a[2]} ${a[1]}
+		fi
+	else
+		if flag_exists "-f" || flag_exists "--force"; then
+			create
+			create_sublist ${a[2]} ${a[1]}
+		else
+			error "File does not exist. To force file creation, add the -f Flag"
+		fi
+	fi
 }
 
 function show()
