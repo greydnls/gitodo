@@ -6,10 +6,16 @@ function error()
 	exit
 }
 
+function success()
+{
+	echo $1
+	echo "$commit_message$1" >> gitodo.tmpfile
+}
+
 create_file()
 {
 	echo "# $1" >> $1.md
-	echo "File Creation Complete. $1.md created"
+	success "File $1.md created"
 }
 
 function create_sublist()
@@ -17,7 +23,7 @@ function create_sublist()
 		echo "
 
 ### $1" >> $2.md
-        	echo "Sublist Created $1 in list $2"
+		success "Added ublist $1 in list $2"
 }
 
 function find_flag_index()
@@ -39,6 +45,23 @@ function flag_exists()
 	return 1
 }
 
+function create_sublist_from_flag()
+{
+	content=$(cat "${a[1]}.md")
+	if flag_exists "-s"; then
+		find_flag_index "-s"
+		if [ -z "${a[$idx]}" ]; then
+			if ! sublist_exists "General"; then
+        		create_sublist "General" $1
+        	fi
+		else
+			if ! sublist_exists "${a[$idx]}"; then
+				create_sublist "${a[$idx]}" $1
+			fi
+		fi
+	fi
+}
+
 function create()
 {
 	if [ -z ${a[1]} ]; then
@@ -47,14 +70,6 @@ function create()
 		error "Requested File already exists."
 	else
 		create_file ${a[1]}
-		if flag_exists "-s"; then
-			find_flag_index "-s"
-			if [ -z "${a[$idx]}" ]; then
-				create_sublist "General" $1
-			else
-				create_sublist "${a[$idx]}" $1
-			fi
-		fi
 	fi
 }
 
@@ -73,25 +88,15 @@ function add_todo()
 	if todo_exists "$1"; then
 		if flag_exists "-f" || flag_exists "--force"; then
 			echo "- [ ] $1" >> $2.md
-			echo "Todo successfully added"
+			success "Todo $1 successfully added"
 		elif todo_is_complete "${a[2]}"; then
 			error "Todo already exists and is already complete. To add it anyway, add the -f Flag"
 		else
 			error "Todo already exists. To add it anyway, add the -f Flag"
 		fi
 	else
-		if flag_exists "-s"; then
-			find_flag_index "-s"
-			if [ "${a[$idx]}" ]; then
-				echo "- [ ] $1" >> $2.md
-				echo "Todo successfully added"
-			else
-				create_sublist "${a[$idx]}" $1
-				echo "- [ ] $1
-				" >> $2.md
-				echo "Todo successfully added"
-			fi
-		fi
+		echo "- [ ] $1" >> $2.md
+		success "Todo $1 successfully added"
 	fi
 }
 
@@ -100,16 +105,17 @@ function todo()
 	if [ -z ${a[1]} ] || [ -z "${a[2]}" ]; then
 		error "Filename and todo must be specified"
 	elif [ -a "${a[1]}.md" ]; then
+		create_sublist_from_flag ${a[1]}
 		add_todo "${a[2]}" ${a[1]}
 	else
 		if flag_exists "-f" || flag_exists "--force"; then
 			create
+			create_sublist_from_flag ${a[1]}
 			add_todo "${a[2]}" ${a[1]}
 		else
 			error "File does not exist. To force file creation, add the -f Flag"
 		fi
 	fi
-	exit 0
 }
 
 function todo_is_complete()
@@ -130,7 +136,7 @@ function complete()
 				error "Todo is already complete"
 			else
 				echo "${content/"- [ ] ${a[2]}"/- [x] ${a[2]} }" > "${a[1]}.md"
-				echo "${a[2]} successfully marked as complete"
+				success "${a[2]} marked as complete"
 			fi
 		else
 			error "Todo ${a[2]} does not exist"
@@ -152,19 +158,23 @@ function sublist_exists()
 
 function sublist()
 {
-	if [ -z ${a[1]} ] || [ -z ${a[2]} ]; then
+	if [ -z ${a[1]} ] || [ -z "${a[2]}" ]; then
 		error "Filename and sublist must be specified"
 	elif [ -a "${a[1]}.md" ]; then
 		content=$(cat "${a[1]}.md")
 		if sublist_exists ${a[2]}; then
-    		error "Sublist ${a[2]} already exists"
+			if flag_exists "-f" || flag_exists "--force"; then
+				create_sublist "${a[2]}" ${a[1]}
+			else
+	    		error "Sublist ${a[2]} already exists. If you would like to add it anyway, add the -f flag"
+			fi
 		else
-			create_sublist ${a[2]} ${a[1]}
+			create_sublist "${a[2]}" ${a[1]}
 		fi
 	else
 		if flag_exists "-f" || flag_exists "--force"; then
 			create
-			create_sublist ${a[2]} ${a[1]}
+			create_sublist "${a[2]}" ${a[1]}
 		else
 			error "File does not exist. To force file creation, add the -f Flag"
 		fi
@@ -207,19 +217,34 @@ function show()
 	fi
 }
 
+function write()
+{
+	if ! flag_exists "-h" && ! flag_exists "--hold"; then
+		commit_message=$(cat "gitodo.tmpfile")
+		response=$(git pull origin master)
+		response=$(git add --all && git commit -m "$commit_message" && git push origin master)
+		rm gitodo.tmpfile
+	fi
+}
+
 a=("$@")
 case $1 in
 	create)
 		create
+		create_sublist_from_flag
+		write
 		;;
 	todo)
 		todo
+		write
 		;;
 	complete)
 		complete
+		write
 		;;
 	sublist)
 		sublist
+		write
 		;;
 	show)
 		show
