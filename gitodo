@@ -72,7 +72,7 @@ function create()
 	elif [ -a "${a[1]}.md" ]; then
 		error "Requested File already exists."
 	fi
-	file_is_in_gitdir
+	confirm_file_is_in_gitdir
 	create_file ${a[1]}
 }
 
@@ -132,7 +132,7 @@ function todo_is_complete()
 
 function complete()
 {
-  file_exists
+  confirm_file_exists
 	content=$(<"${a[1]}.md")
 	if todo_exists "${a[2]}"; then
 		if todo_is_complete "${a[2]}"; then
@@ -206,7 +206,7 @@ function show()
 	if [ -z "${a[1]}" ]; then
 		error "Filename must be specified"
 	fi
-	file_exists
+	confirm_file_exists
 	while read line; do
 		if should_be_shown "$line"; then
 			echo "$line"
@@ -226,8 +226,8 @@ function write()
 
 # This checks that the directory your todo file is in is the same as
 # the git repository that you are currently working in. It does *not*
-# check that the todo file actually exists, that is handled by file_exists()
-function file_is_in_gitdir()
+# check that the todo file actually exists, that is handled by confirm_file_exists()
+function confirm_file_is_in_gitdir()
 {
   file_name=$(readlink -f "${a[1]}.md")
   directory=$(dirname "$file_name")
@@ -240,12 +240,12 @@ function file_is_in_gitdir()
 # Check to see if the file containing your todo list exists and exits the script
 # with an error if it does not. As such, it is not suitable for use any time the
 # file existing is not a fatal error.
-function file_exists()
+function confirm_file_exists()
 {
   if [[ ! -a ${a[1]}.md ]]; then
     error "Requested list ${a[1]} doesn't exist"
   fi
-  file_is_in_gitdir # We should also check this whenever we're looking to see if
+  confirm_file_is_in_gitdir # We should also check this whenever we're looking to see if
                     # the file exists, though not vice-versa
 }
 
