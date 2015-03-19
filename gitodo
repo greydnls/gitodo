@@ -1,5 +1,8 @@
 #!/bin/sh
 
+TMPFILE=$(mktemp /tmp/gitodo.XXXXXX)
+trap 'rm -f $TMPFILE' EXIT
+
 function error()
 {
 	echo "Error: $1"
@@ -9,7 +12,7 @@ function error()
 function success()
 {
 	echo $1
-	echo "$commit_message$1" >> gitodo.tmpfile
+	echo "${commit_message}$1" >> ${TMPFILE}
 }
 
 create_file()
@@ -47,7 +50,7 @@ function flag_exists()
 
 function create_sublist_from_flag()
 {
-	content=$(cat "${a[1]}.md")
+	content=$(<"${a[1]}.md")
 	if flag_exists "-s"; then
 		find_flag_index "-s"
 		if [ -z "${a[$idx]}" ]; then
@@ -68,9 +71,9 @@ function create()
 		error "File name must be specified"
 	elif [ -a "${a[1]}.md" ]; then
 		error "Requested File already exists."
-	else
-		create_file ${a[1]}
 	fi
+	confirm_file_is_in_gitdir
+	create_file ${a[1]}
 }
 
 function todo_exists()
@@ -84,7 +87,7 @@ function todo_exists()
 
 function add_todo()
 {
-	content=$(cat "${a[1]}.md")
+	content=$(<"${a[1]}.md")
 	if todo_exists "$1"; then
 		if flag_exists "-f" || flag_exists "--force"; then
 			echo "- [ ] $1" >> $2.md
@@ -113,7 +116,7 @@ function todo()
 			create_sublist_from_flag ${a[1]}
 			add_todo "${a[2]}" ${a[1]}
 		else
-			error "File does not exist. To force file creation, add the -f Flag"
+			error "File does not exist. To force file creation, add the -f flag"
 		fi
 	fi
 }
@@ -129,22 +132,18 @@ function todo_is_complete()
 
 function complete()
 {
-	if [ -a "${a[1]}.md" ]; then
-		content=$(cat "${a[1]}.md")
-		if todo_exists "${a[2]}"; then
-			if todo_is_complete "${a[2]}"; then
-				error "Todo is already complete"
-			else
-				echo "${content/"- [ ] ${a[2]}"/- [x] ${a[2]} }" > "${a[1]}.md"
-				success "${a[2]} marked as complete"
-			fi
+  confirm_file_exists
+	content=$(<"${a[1]}.md")
+	if todo_exists "${a[2]}"; then
+		if todo_is_complete "${a[2]}"; then
+			error "Todo is already complete"
 		else
-			error "Todo ${a[2]} does not exist"
+			echo "${content/"- [ ] ${a[2]}"/- [x] ${a[2]} }" > "${a[1]}.md"
+			success "${a[2]} marked as complete"
 		fi
 	else
-		error "Requested List '${a[1]}' does not exist"
+		error "Todo ${a[2]} does not exist"
 	fi
-
 }
 
 function sublist_exists()
@@ -161,7 +160,7 @@ function sublist()
 	if [ -z ${a[1]} ] || [ -z "${a[2]}" ]; then
 		error "Filename and sublist must be specified"
 	elif [ -a "${a[1]}.md" ]; then
-		content=$(cat "${a[1]}.md")
+		content=$(<"${a[1]}.md")
 		if sublist_exists ${a[2]}; then
 			if flag_exists "-f" || flag_exists "--force"; then
 				create_sublist "${a[2]}" ${a[1]}
@@ -204,27 +203,50 @@ function should_be_shown()
 
 function show()
 {
-	if [ -z ${a[1]} ]; then
-    		error "Filename must be specified"
-	elif [ -a "${a[1]}.md" ]; then
-		while read line; do
-			if should_be_shown "$line"; then
-	            echo "$line"
-			fi
-        done < ${a[1]}.md
-	else
-		error "Requested File ${a[1]} doesn't exist"
+	if [ -z "${a[1]}" ]; then
+		error "Filename must be specified"
 	fi
+	confirm_file_exists
+	while read line; do
+		if should_be_shown "$line"; then
+			echo "$line"
+		fi
+	done < "${a[1]}.md"
 }
 
 function write()
 {
 	if ! flag_exists "-h" && ! flag_exists "--hold"; then
-		commit_message=$(cat "gitodo.tmpfile")
-		rm gitodo.tmpfile
+		commit_message=$(<"${TMPFILE}")
+		rm ${TMPFILE}
 		response=$(git pull origin master)
-		response=$(git add --all && git commit -m "$commit_message" && git push origin master)
+		response=$(git add --all && git commit -m "${commit_message}" && git push origin master)
 	fi
+}
+
+# This checks that the directory your todo file is in is the same as
+# the git repository that you are currently working in. It does *not*
+# check that the todo file actually exists, that is handled by confirm_file_exists()
+function confirm_file_is_in_gitdir()
+{
+  file_name=$(readlink -f "${a[1]}.md")
+  directory=$(dirname "$file_name")
+  git_repo=$(git rev-parse --show-toplevel)
+  if [[ ! $directory =~ $git_repo ]]; then
+    error "Todo file must be located within the current git repo: ${git_repo}"
+  fi
+}
+
+# Check to see if the file containing your todo list exists and exits the script
+# with an error if it does not. As such, it is not suitable for use any time the
+# file existing is not a fatal error.
+function confirm_file_exists()
+{
+  if [[ ! -a ${a[1]}.md ]]; then
+    error "Requested list ${a[1]} doesn't exist"
+  fi
+  confirm_file_is_in_gitdir # We should also check this whenever we're looking to see if
+                    # the file exists, though not vice-versa
 }
 
 a=("$@")
@@ -250,6 +272,13 @@ case $1 in
 		show
 		;;
 	*)
-		echo $"Usage: $0 {create|add|complete|show|todo}"
+		echo $"Usage: $0 <create|todo|complete|show|sublist> [--open | --done]"
+		echo ""
+		echo "Examples:"
+		echo "         gitodo create MyFile"
+		echo "         gitodo todo MyFile 'Take Over The World'"
+		echo "         gitodo show MyFile --open"
+		echo "         gitodo complete MyFile 'Take Over The World'"
+		echo "         gitodo sublist MyFile 'Sublist Name'"
 		exit 0
 esac
