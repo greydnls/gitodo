@@ -25,8 +25,8 @@ function create_sublist()
 {
 		echo "
 
-### $1" >> $2.md
-		success "Added ublist $1 in list $2"
+### $1" >> $filename
+		success "Added sublist $1 in list $2"
 }
 
 function find_flag_index()
@@ -34,6 +34,7 @@ function find_flag_index()
 	for i in "${!a[@]}" ; do
 		if [ "${a[$i]}" = $1 ]; then
 			idx=$(($i+1))
+			flag_value="${a[$idx]}"
 		fi
 	done
 }
@@ -42,6 +43,7 @@ function flag_exists()
 {
 	for i in "${!a[@]}" ; do
 		if [ "${a[$i]}" = $1 ]; then
+		    find_flag_index $1
 			return 0
 		fi
 	done
@@ -50,16 +52,15 @@ function flag_exists()
 
 function create_sublist_from_flag()
 {
-	content=$(<"${a[1]}.md")
 	if flag_exists "-s"; then
 		find_flag_index "-s"
-		if [ -z "${a[$idx]}" ]; then
+		if [ -z "$flag_value" ]; then
 			if ! sublist_exists "General"; then
         		create_sublist "General" $1
         	fi
 		else
-			if ! sublist_exists "${a[$idx]}"; then
-				create_sublist "${a[$idx]}" $1
+			if ! sublist_exists "$flag_value"; then
+				create_sublist "$flag_value" $1
 			fi
 		fi
 	fi
@@ -69,7 +70,7 @@ function create()
 {
 	if [ -z ${a[1]} ]; then
 		error "File name must be specified"
-	elif [ -a "${a[1]}.md" ]; then
+	elif [ -a $filename ]; then
 		error "Requested File already exists."
 	fi
 	confirm_file_is_in_gitdir
@@ -87,20 +88,34 @@ function todo_exists()
 
 function add_todo()
 {
-	content=$(<"${a[1]}.md")
 	if todo_exists "$1"; then
 		if flag_exists "-f" || flag_exists "--force"; then
-			echo "- [ ] $1" >> $2.md
-			success "Todo $1 successfully added"
+			write_todo "$1" "$2"
 		elif todo_is_complete "${a[2]}"; then
 			error "Todo already exists and is already complete. To add it anyway, add the -f Flag"
 		else
 			error "Todo already exists. To add it anyway, add the -f Flag"
 		fi
 	else
-		echo "- [ ] $1" >> $2.md
-		success "Todo $1 successfully added"
+		write_todo "$1" "$2"
 	fi
+}
+
+function write_todo()
+{
+    if flag_exists "-l"; then
+        find_flag_index "-l"
+        if [ -z "$flag_value" ]; then
+             todo_content="- [ ] $1"
+        else
+            todo_content="- [ ] [$1](${a[$idx]})"
+        fi
+    else
+        todo_content="- [ ] $1"
+    fi
+
+    success "Todo $1 successfully added"
+
 }
 
 function todo()
@@ -133,7 +148,6 @@ function todo_is_complete()
 function complete()
 {
   confirm_file_exists
-	content=$(<"${a[1]}.md")
 	if todo_exists "${a[2]}"; then
 		if todo_is_complete "${a[2]}"; then
 			error "Todo is already complete"
@@ -183,18 +197,18 @@ function sublist()
 function should_be_shown()
 {
 	if flag_exists "--done"; then
-		if [[ $1 == *"- [x]"* ]] || [[ $1 == *"### "* ]]; then
+		if [[ $1 == *"- [x]"* ]] || line_is_sublist "$1"; then
 			return 0
 		else
 			return 1
 		fi
 	elif flag_exists "--open"; then
-		if [[ $1 == *"- [ ]"* ]] || [[ $1 == *"### "* ]]; then
+		if [[ $1 == *"- [ ]"* ]] || line_is_sublist "$1"; then
 			return 0
 		else
 			return 1
 		fi
-	elif [[ $1 == *"- [x]"* ]] || [[ $1 == *"- [ ]"* ]] || [[ $1 == *"### "* ]]; then
+	elif [[ $1 == *"- [x]"* ]] || [[ $1 == *"- [ ]"* ]] || line_is_sublist "$1"; then
 		return 0
 	else
 		return 1
@@ -206,12 +220,59 @@ function show()
 	if [ -z "${a[1]}" ]; then
 		error "Filename must be specified"
 	fi
+
 	confirm_file_exists
+
 	while read line; do
-		if should_be_shown "$line"; then
-			echo "$line"
+
+		if flag_exists "-s"; then
+
+            if line_is_matching_sublist "$line"; then
+		        start=1
+		        echo "$line"
+		    fi
+
+		     if [[ $start -eq 1 ]] && ! line_is_nonmatching_sublist "$line" && should_be_shown "$line"; then
+		        echo $line
+		    fi
+
+            if [[ $start -eq 1 ]] && line_is_nonmatching_sublist "$line"; then
+                break
+            fi
+        else
+            if should_be_shown "$line"; then
+                echo "$line"
+            fi
 		fi
-	done < "${a[1]}.md"
+	done < "$filename"
+}
+
+
+function line_is_nonmatching_sublist()
+{
+    if line_is_sublist "$1" && ! line_is_matching_sublist "$1"; then
+        return 0
+    fi
+
+    return 1
+}
+
+function line_is_matching_sublist()
+{
+    if [[ "$1" == *"### $flag_value"* ]]; then
+        return 0
+    fi
+
+    return 1
+}
+
+function line_is_sublist()
+{
+    if [[ "$1" == *"### "* ]]; then
+        return 0
+    fi
+    return 1
+
 }
 
 function write()
@@ -229,12 +290,22 @@ function write()
 # file existing is not a fatal error.
 function confirm_file_exists()
 {
-  if [[ ! -a ${a[1]}.md ]]; then
+  if [[ ! -a $filename ]]; then
     error "Requested list ${a[1]} doesn't exist"
   fi
 }
 
+function read_content
+{
+    content=$(< $filename )
+}
+
+
 a=("$@")
+filename=${a[1]}.md
+
+read_content
+
 case $1 in
 	create)
 		create

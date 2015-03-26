@@ -75,3 +75,8 @@ Gitodo is not able to be used from inside any git repo you like.
 `gitodo show --past-due`
 - [ ] Add multiple, todos at once
 - [x] Warn when todo already exists
+- [ ] move todo
+- [ ] remove todo
+- [ ] remove sublist
+- [ ] complete sublist
+- [ ] include link with todo
