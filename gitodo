@@ -224,19 +224,6 @@ function write()
 	fi
 }
 
-# This checks that the directory your todo file is in is the same as
-# the git repository that you are currently working in. It does *not*
-# check that the todo file actually exists, that is handled by confirm_file_exists()
-function confirm_file_is_in_gitdir()
-{
-  file_name=$(readlink -f "${a[1]}.md")
-  directory=$(dirname "$file_name")
-  git_repo=$(git rev-parse --show-toplevel)
-  if [[ ! $directory =~ $git_repo ]]; then
-    error "Todo file must be located within the current git repo: ${git_repo}"
-  fi
-}
-
 # Check to see if the file containing your todo list exists and exits the script
 # with an error if it does not. As such, it is not suitable for use any time the
 # file existing is not a fatal error.
@@ -245,8 +232,6 @@ function confirm_file_exists()
   if [[ ! -a ${a[1]}.md ]]; then
     error "Requested list ${a[1]} doesn't exist"
   fi
-  confirm_file_is_in_gitdir # We should also check this whenever we're looking to see if
-                    # the file exists, though not vice-versa
 }
 
 a=("$@")
