@@ -15,18 +15,31 @@ function success()
 	echo "${commit_message}$1" >> ${TMPFILE}
 }
 
-create_file()
+function create_file()
 {
-	echo "# $1" >> $1.md
+	echo "# $1" >> "$filename"
 	success "File $1.md created"
 }
 
 function create_sublist()
 {
-		echo "
+    echo "
 
-### $1" >> $filename
+### $1" >> $2.md
 		success "Added sublist $1 in list $2"
+}
+
+function remove()
+{
+    confirm_file_exists
+
+    if todo_exists "- [ ] ${a[2]}"; then
+        echo "${content/"- [ ] ${a[2]}"/}" > "$filename"
+        success "${a[2]} successfully removed"
+    else
+        error "Todo '${a[2]}' does not exist"
+    fi
+
 }
 
 function find_flag_index()
@@ -54,13 +67,13 @@ function create_sublist_from_flag()
 {
 	if flag_exists "-s"; then
 		find_flag_index "-s"
-		if [ -z "$flag_value" ]; then
+		if [ -z "${a[$idx]}" ]; then
 			if ! sublist_exists "General"; then
         		create_sublist "General" $1
         	fi
 		else
-			if ! sublist_exists "$flag_value"; then
-				create_sublist "$flag_value" $1
+			if ! sublist_exists "${a[$idx]}"; then
+				create_sublist "${a[$idx]}" $1
 			fi
 		fi
 	fi
@@ -79,7 +92,7 @@ function create()
 
 function todo_exists()
 {
-	if [[ $content == *"$1"* ]]; then
+	if [[ "$content" == *"$1"* ]]; then
 		return 0
 	else
 		return 1
@@ -107,21 +120,21 @@ function write_todo()
         find_flag_index "-l"
         if [ -z "$flag_value" ]; then
              todo_content="
-- [ ] $1"
+- [ ] $1  "
         else
             todo_content="
-- [ ] [$1]($flag_value)"
+- [ ] [$1]($flag_value)  "
         fi
     else
         todo_content="
-- [ ] $1"
+- [ ] $1  "
     fi
 
     if flag_exists "-s"; then
-
-        echo "${content/"### $flag_value"/ ### $flag_value $todo_content}" > "$filename"
+        content=$(< $filename )
+        echo "${content/"### $flag_value"/### $flag_value $todo_content}" > "$filename"
     else
-        echo "${content/"### $flag_value"/ ### General $todo_content}" > "$filename"
+        echo "$todo_content" > "$filename"
     fi
     success "Todo $1 successfully added"
 
@@ -304,15 +317,36 @@ function confirm_file_exists()
   fi
 }
 
-function read_content
+function read_content()
 {
-    content=$(< $filename )
+    if [[ -z ${a[1]} ]]; then
+        help
+    else
+        filename=${a[1]}.md
+        if [[ -a "$filename" ]]; then
+            content=$(< $filename )
+        else
+            error "File $filename does not exist"
+        fi
+    fi
 }
 
+function help()
+{
+    echo $"Usage: $0 <create|todo|remove|complete|show|sublist> [--open | --done]"
+    echo ""
+    echo "Examples:"
+    echo "         gitodo create MyFile"
+    echo "         gitodo todo MyFile 'Take Over The World'"
+    echo "         gitodo show MyFile --open"
+    echo "         gitodo complete MyFile 'Take Over The World'"
+    echo "         gitodo sublist MyFile 'Sublist Name'"
+    echo "         gitodo remove MyFile 'Todo Name Here'"
+    exit 0
+
+}
 
 a=("$@")
-filename=${a[1]}.md
-
 read_content
 
 case $1 in
@@ -323,6 +357,10 @@ case $1 in
 		;;
 	todo)
 		todo
+		write
+		;;
+	remove)
+		remove
 		write
 		;;
 	complete)
@@ -336,14 +374,9 @@ case $1 in
 	show)
 		show
 		;;
+	help)
+	    help
+	    ;;
 	*)
-		echo $"Usage: $0 <create|todo|complete|show|sublist> [--open | --done]"
-		echo ""
-		echo "Examples:"
-		echo "         gitodo create MyFile"
-		echo "         gitodo todo MyFile 'Take Over The World'"
-		echo "         gitodo show MyFile --open"
-		echo "         gitodo complete MyFile 'Take Over The World'"
-		echo "         gitodo sublist MyFile 'Sublist Name'"
-		exit 0
+		help
 esac

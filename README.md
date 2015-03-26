@@ -30,6 +30,9 @@ Gitodo supports sublists inside lists, as well as list/sublist creation, checkin
 - [x] Viewing only completed todos:
 `gitodo show FileName --done`
 
+- [x] Remove a todo:
+`gitodo remove FileName "todo"`
+
 #### The -f flag
 By default Gitodo will throw errors if you attempt to add a todo to a file that does not exist, or to a sublist that does not exist in a file. Adding the -f flag, (or --force) will suppress the errors and create the file or sublist as necessary.
 
@@ -85,7 +88,8 @@ Gitodo is not able to be used from inside any git repo you like.
 - [ ] View past due todos
 `gitodo show --past-due`
 - [ ] Add multiple, todos at once
-- [ ] move todo
-- [ ] remove todo
+- [ ] move todo to different list
 - [ ] remove sublist
 - [ ] complete sublist
+- [ ] add ability to have same commit on multiple sublists
+- [ ] search
