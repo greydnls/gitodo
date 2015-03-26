@@ -44,6 +44,17 @@ If you would like to create a new Todo List with a sublist you can add the -s fl
 
 **With Custom Sublist:**  `gitodo create FileName -s "My Nifty List Name"`
 
+### The -l flag
+If you would like to add a link to a todo, you can do that easily with the -l flag. 
+
+**Example**
+
+```
+gitodo todo SomeFileName "The Dutch" -l "http://thedutchnyc.com"
+```
+**Will Result in:**  
+`- [ ] [The Dutch](http://thedutchnyc.com)`
+
 ### The -h flag
 By default gitodo will create a commit for each write action. These are triggered on `create`, `todo`,  `complete`, and `sublist` commands. If you would like to hold a group of changes to be committed at once, you can use the -h flag ( or --hold). The next writeable command will commit all the previously held commands into a single commit.
 
@@ -59,7 +70,7 @@ gitodo create NewList -s "Nifty Sublist" // This will commit itself and the two 
 Make gitodo executable, and move to a useable place.
 
 ```
-chmod +x gitodo && mv gitodo /usr/local/bin/
+chmod +x gitodo && cp gitodo /usr/local/bin/
 ```
 
 Gitodo is not able to be used from inside any git repo you like.
@@ -74,9 +85,7 @@ Gitodo is not able to be used from inside any git repo you like.
 - [ ] View past due todos
 `gitodo show --past-due`
 - [ ] Add multiple, todos at once
-- [x] Warn when todo already exists
 - [ ] move todo
 - [ ] remove todo
 - [ ] remove sublist
 - [ ] complete sublist
-- [ ] include link with todo

@@ -106,14 +106,23 @@ function write_todo()
     if flag_exists "-l"; then
         find_flag_index "-l"
         if [ -z "$flag_value" ]; then
-             todo_content="- [ ] $1"
+             todo_content="
+- [ ] $1"
         else
-            todo_content="- [ ] [$1](${a[$idx]})"
+            todo_content="
+- [ ] [$1]($flag_value)"
         fi
     else
-        todo_content="- [ ] $1"
+        todo_content="
+- [ ] $1"
     fi
 
+    if flag_exists "-s"; then
+
+        echo "${content/"### $flag_value"/ ### $flag_value $todo_content}" > "$filename"
+    else
+        echo "${content/"### $flag_value"/ ### General $todo_content}" > "$filename"
+    fi
     success "Todo $1 successfully added"
 
 }
