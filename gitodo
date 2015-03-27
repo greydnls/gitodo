@@ -85,7 +85,7 @@ function create()
 {
 	if [ -z ${a[1]} ]; then
 		error "File name must be specified"
-	elif [ -a $filename ]; then
+	elif file_exists; then
 		error "Requested File already exists."
 	fi
 	confirm_file_is_in_gitdir
@@ -144,16 +144,16 @@ function write_todo()
 
 function todo()
 {
-	if [ -z ${a[1]} ] || [ -z "${a[2]}" ]; then
+	if [ -z $filename ] || [ -z "${a[2]}" ]; then
 		error "Filename and todo must be specified"
-	elif [ -a "${a[1]}.md" ]; then
-		create_sublist_from_flag ${a[1]}
-		add_todo "${a[2]}" ${a[1]}
+	elif [ file_exists ]; then
+		create_sublist_from_flag $filename
+		add_todo "${a[2]}" $filename
 	else
 		if flag_exists "-f" || flag_exists "--force"; then
 			create
-			create_sublist_from_flag ${a[1]}
-			add_todo "${a[2]}" ${a[1]}
+			create_sublist_from_flag $filename
+			add_todo "${a[2]}" $filename
 		else
 			error "File does not exist. To force file creation, add the -f flag"
 		fi
@@ -197,8 +197,7 @@ function sublist()
 {
 	if [ -z ${a[1]} ] || [ -z "${a[2]}" ]; then
 		error "Filename and sublist must be specified"
-	elif [ -a "${a[1]}.md" ]; then
-		content=$(<"${a[1]}.md")
+	elif [ -a "$filename" ]; then
 		if sublist_exists ${a[2]}; then
 			if flag_exists "-f" || flag_exists "--force"; then
 				create_sublist "${a[2]}" ${a[1]}
@@ -347,7 +346,7 @@ function search()
         done
     else
         searchterm=${a[2]}
-        searchfile "${a[1]}.md" "$searchterm"
+        searchfile "$filename" "$searchterm"
     fi
 
     if [[ $search_output != "" ]]; then
@@ -377,11 +376,17 @@ function searchfile()
 function write()
 {
 	if ! flag_exists "-h" && ! flag_exists "--hold"; then
-		commit_message=$(<"${TMPFILE}")
-		rm ${TMPFILE}
-		response=$(git pull origin master)
-		response=$(git add --all && git commit -m "${commit_message}" && git push origin master)
+		publish
 	fi
+}
+
+function publish()
+{
+    commit_message=$(<"${TMPFILE}")
+    rm ${TMPFILE}
+    response=$(git pull origin master)
+    response=$(git add --all && git commit -m "${commit_message}" && git push origin master)
+    exit
 }
 
 # Check to see if the file containing your todo list exists and exits the script
@@ -389,35 +394,46 @@ function write()
 # file existing is not a fatal error.
 function confirm_file_exists()
 {
-  if [[ ! -a $filename ]]; then
+  if [[ ! file_exists ]]; then
     error "Requested list ${a[1]} doesn't exist"
   fi
 }
 
 function read_content()
 {
-    if [[ -z ${a[1]} ]]; then
-        help
-    else
-        if ! flag_exists "-a" && ! flag_exists "--all"; then
+    if [[ ${a[0]} != "publish" ]]; then
+        if [[ -z ${a[1]} ]]; then
+            help
+        else
+            if ! flag_exists "-a" && ! flag_exists "--all"; then
+                if [[ ${a[1]} != *".md" ]]; then
+                    filename=${a[1]}.md
+                else
+                    filename=${a[1]}
+                fi
 
-            if [[ ${a[1]} != *".md" ]]; then
-                filename=${a[1]}.md
-            else
-                filename=${a[1]}
-            fi
-            if [[ -a "$filename" ]]; then
-                content=$(< $filename )
-            else
-                error "File $filename does not exist"
+                if [[ file_exists ]]; then
+                    content=$(< $filename )
+                else
+                    error "File $filename does not exist"
+                fi
             fi
         fi
     fi
 }
 
+function file_exists()
+{
+    if [[ -a "$filename" ]]; then
+        return 0
+    fi
+
+    return 1
+
+}
 function help()
 {
-    echo $"Usage: $0 <create|todo|search\remove|complete|show|sublist> [--open | --done]"
+    echo $"Usage: $0 <create|todo|publish|search|remove|complete|show|sublist> [--open | --done]"
     echo ""
     echo "Examples:"
     echo "         gitodo create MyFile"
@@ -426,6 +442,7 @@ function help()
     echo "         gitodo complete MyFile 'Take Over The World'"
     echo "         gitodo sublist MyFile 'Sublist Name'"
     echo "         gitodo remove MyFile 'Todo Name Here'"
+    echo "         gitodo search MyFile 'Search Term'"
     exit 0
 
 }
@@ -438,6 +455,9 @@ case $1 in
 		create
 		create_sublist_from_flag
 		write
+		;;
+	publish)
+		publish
 		;;
 	todo)
 		todo

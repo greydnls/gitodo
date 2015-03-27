@@ -36,6 +36,9 @@ Gitodo supports sublists inside lists, as well as list/sublist creation, checkin
 - [x] Searching for a todo: 
 `gitodo search FileName "todo"`
 
+- [x] Publish a group of held todos: 
+`gitodo publish`
+
 #### The -f flag
 By default Gitodo will throw errors if you attempt to add a todo to a file that does not exist, or to a sublist that does not exist in a file. Adding the -f flag, (or --force) will suppress the errors and create the file or sublist as necessary.
 
@@ -72,6 +75,14 @@ gitodo todo TestList "another really neat todo" -h
 gitodo create NewList -s "Nifty Sublist" // This will commit itself and the two previous todos
 ```
 
+If you've held a number of todos that you need to push to github, you can use the `publish` command.
+
+```
+gitodo todo TestList "some cool Todo" -h
+gitodo todo TestList "another really neat todo" -h
+gitodo publish // will push up prevoius two todos
+``` 
+
 ### The -a flag
 When searching for todos, you can add the `-a` or `--all` tag to search every .md file in the current directory. 
 
@@ -101,3 +112,4 @@ Gitodo is not able to be used from inside any git repo you like.
 - [ ] remove sublist
 - [ ] complete sublist
 - [ ] add ability to have same commit on multiple sublists
+- [ ] Add ability to publish a single file
