@@ -253,7 +253,6 @@ function show()
 
             if line_is_matching_sublist "$line"; then
 		        start=1
-		        echo "$line"
 		    fi
 
 		     if [[ $start -eq 1 ]] && ! line_is_nonmatching_sublist "$line" && should_be_shown "$line"; then
@@ -401,7 +400,12 @@ function read_content()
         help
     else
         if ! flag_exists "-a" && ! flag_exists "--all"; then
-            filename=${a[1]}.md
+
+            if [[ ${a[1]} != *".md" ]]; then
+                filename=${a[1]}.md
+            else
+                filename=${a[1]}
+            fi
             if [[ -a "$filename" ]]; then
                 content=$(< $filename )
             else
