@@ -1,7 +1,9 @@
 #!/bin/sh
 
 TMPFILE=$(mktemp /tmp/gitodo.XXXXXX)
+TMPSEARCH=$(mktemp /tmp/gitodo_search.XXXXXX)
 trap 'rm -f $TMPFILE' EXIT
+trap 'rm -f $TMPSEARCH' EXIT
 
 function error()
 {
@@ -230,7 +232,7 @@ function should_be_shown()
 		else
 			return 1
 		fi
-	elif [[ $1 == *"- [x]"* ]] || [[ $1 == *"- [ ]"* ]] || line_is_sublist "$1"; then
+	elif line_is_todo "$1" || line_is_sublist "$1"; then
 		return 0
 	else
 		return 1
@@ -288,6 +290,32 @@ function line_is_matching_sublist()
     return 1
 }
 
+function line_is_todo()
+{
+    if line_is_unfinished_todo "$1" || line_is_finished_todo "$1"; then
+        return 0
+    fi
+
+    return 1
+}
+
+function line_is_unfinished_todo()
+{
+    if [[ "$1" == *"- [ ]"* ]]; then
+        return 0
+    fi
+
+    return 1
+}
+
+function line_is_finished_todo()
+{
+    if [[ "$1" == *"- [x]"* ]]; then
+        return 0
+    fi
+
+    return 1
+}
 function line_is_sublist()
 {
     if [[ "$1" == *"### "* ]]; then
@@ -297,6 +325,56 @@ function line_is_sublist()
 
 }
 
+function search()
+{
+
+    if   ! flag_exists "-a" && ! flag_exists "--all" ; then
+        confirm_file_exists
+    fi
+
+    if [ -z "${a[1]}" ]; then
+		error "Search Term must be specified"
+    fi
+
+    output_file=""
+    search_output=""
+
+    if flag_exists "-a" || flag_exists "--all"; then
+        searchterm=${a[1]}
+        for file in `ls .`; do
+            if [[ -f $file ]] && [ ${file: -3} == ".md" ]; then
+                searchfile $file "$searchterm"
+            fi
+        done
+    else
+        searchterm=${a[2]}
+        searchfile "${a[1]}.md" "$searchterm"
+    fi
+
+    if [[ $search_output != "" ]]; then
+     echo "$search_output"
+    else
+        error "Search term '$searchterm' not found"
+    fi
+
+}
+
+function searchfile()
+{
+    while read line; do
+        if ! line_is_sublist $line; then
+            if line_is_todo "$line" && [[ "$line" == *"$2"* ]]; then
+                if  [[ $output_file != $file ]] ; then
+                    search_output+="$1
+"
+                fi
+                output_file=$1
+                search_output+="$line
+"
+            fi
+        fi
+	done < "$1"
+}
 function write()
 {
 	if ! flag_exists "-h" && ! flag_exists "--hold"; then
@@ -322,18 +400,20 @@ function read_content()
     if [[ -z ${a[1]} ]]; then
         help
     else
-        filename=${a[1]}.md
-        if [[ -a "$filename" ]]; then
-            content=$(< $filename )
-        else
-            error "File $filename does not exist"
+        if ! flag_exists "-a" && ! flag_exists "--all"; then
+            filename=${a[1]}.md
+            if [[ -a "$filename" ]]; then
+                content=$(< $filename )
+            else
+                error "File $filename does not exist"
+            fi
         fi
     fi
 }
 
 function help()
 {
-    echo $"Usage: $0 <create|todo|remove|complete|show|sublist> [--open | --done]"
+    echo $"Usage: $0 <create|todo|search\remove|complete|show|sublist> [--open | --done]"
     echo ""
     echo "Examples:"
     echo "         gitodo create MyFile"
@@ -373,6 +453,9 @@ case $1 in
 		;;
 	show)
 		show
+		;;
+	search)
+		search
 		;;
 	help)
 	    help
