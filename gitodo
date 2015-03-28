@@ -29,9 +29,6 @@ function create_sublist()
 
 ### $1" >> "$filename"
 
-echo "$content"
-exit
-
 		success "Added sublist $1 in list $filename"
 }
 
