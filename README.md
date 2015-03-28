@@ -39,32 +39,7 @@ Gitodo supports sublists inside lists, as well as list/sublist creation, checkin
 - [x] Publish a group of held todos: 
 `gitodo publish`
 
-#### The -f flag
-By default Gitodo will throw errors if you attempt to add a todo to a file that does not exist, or to a sublist that does not exist in a file. Adding the -f flag, (or --force) will suppress the errors and create the file or sublist as necessary.
-
-#### The -s flag
-If you could like a command to pertain to a sublist only during either `show` or `todo` commands, you may add the -s flag with the list name to follow.
-
-**Example**: `gitodo show FileName -s "Sublist Name" `
-
-If you would like to create a new Todo List with a sublist you can add the -s flag to add the default **General** sublist to the file. You can also add an argument after the -s flag to provide a custom sublist name.
-
-**Example**: `gitodo create FileName -s //adds General sublist`
-
-**With Custom Sublist:**  `gitodo create FileName -s "My Nifty List Name"`
-
-### The -l flag
-If you would like to add a link to a todo, you can do that easily with the -l flag. 
-
-**Example**
-
-```
-gitodo todo SomeFileName "The Dutch" -l "http://thedutchnyc.com"
-```
-**Will Result in:**  
-`- [ ] [The Dutch](http://thedutchnyc.com)`
-
-### The -h flag
+#### The -h flag
 By default gitodo will create a commit for each write action. These are triggered on `create`, `todo`,  `complete`, and `sublist` commands. If you would like to hold a group of changes to be committed at once, you can use the -h flag ( or --hold). The next writeable command will commit all the previously held commands into a single commit.
 
 **Example**
@@ -83,7 +58,33 @@ gitodo todo TestList "another really neat todo" -h
 gitodo publish // will push up prevoius two todos
 ``` 
 
-### The -a flag
+
+#### The -f flag
+By default Gitodo will throw errors if you attempt to add a todo to a file that does not exist, or to a sublist that does not exist in a file. Adding the -f flag, (or --force) will suppress the errors and create the file or sublist as necessary.
+
+#### The -s flag
+If you could like a command to pertain to a sublist only during either `show` or `todo` commands, you may add the -s flag with the list name to follow.
+
+**Example**: `gitodo show FileName -s "Sublist Name" `
+
+If you would like to create a new Todo List with a sublist you can add the -s flag to add the default **General** sublist to the file. You can also add an argument after the -s flag to provide a custom sublist name.
+
+**Example**: `gitodo create FileName -s //adds General sublist`
+
+**With Custom Sublist:**  `gitodo create FileName -s "My Nifty List Name"`
+
+#### The -l flag
+If you would like to add a link to a todo, you can do that easily with the -l flag. 
+
+**Example**
+
+```
+gitodo todo SomeFileName "The Dutch" -l "http://thedutchnyc.com"
+```
+**Will Result in:**  
+`- [ ] [The Dutch](http://thedutchnyc.com)`
+
+#### The -a flag
 When searching for todos, you can add the `-a` or `--all` tag to search every .md file in the current directory. 
 
 **Example**  
@@ -109,6 +110,11 @@ Gitodo is not able to be used from inside any git repo you like.
 `gitodo show --past-due`
 - [ ] Add multiple, todos at once
 - [ ] move todo to different list
+`gitodo move FileName "Todo" "New List Name"`
+- [ ] move todo to different file
+`gitodo move FileName "Todo" --file "New Filename Name"`
+- [ ] move list to different file
+`gitodo move OldFileName --file NewFileName --list "list Name" `
 - [ ] remove sublist
 - [ ] complete sublist
 - [ ] add ability to have same todo on multiple sublists
