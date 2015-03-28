@@ -111,5 +111,5 @@ Gitodo is not able to be used from inside any git repo you like.
 - [ ] move todo to different list
 - [ ] remove sublist
 - [ ] complete sublist
-- [ ] add ability to have same commit on multiple sublists
+- [ ] add ability to have same todo on multiple sublists
 - [ ] Add ability to publish a single file

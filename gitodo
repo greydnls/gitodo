@@ -27,8 +27,12 @@ function create_sublist()
 {
     echo "
 
-### $1" >> $2.md
-		success "Added sublist $1 in list $2"
+### $1" >> "$filename"
+
+echo "$content"
+exit
+
+		success "Added sublist $1 in list $filename"
 }
 
 function remove()
@@ -69,15 +73,17 @@ function create_sublist_from_flag()
 {
 	if flag_exists "-s"; then
 		find_flag_index "-s"
-		if [ -z "${a[$idx]}" ]; then
+		if [ -z "$flag_value" ]; then
 			if ! sublist_exists "General"; then
-        		create_sublist "General" $1
+        		create_sublist "General"
         	fi
 		else
 			if ! sublist_exists "${a[$idx]}"; then
-				create_sublist "${a[$idx]}" $1
+				create_sublist "${a[$idx]}"
 			fi
 		fi
+    elif  ! sublist_exists "General"; then
+        create_sublist "General"
 	fi
 }
 
@@ -103,16 +109,16 @@ function todo_exists()
 
 function add_todo()
 {
-	if todo_exists "$1"; then
+	if todo_exists "$todo"; then
 		if flag_exists "-f" || flag_exists "--force"; then
-			write_todo "$1" "$2"
-		elif todo_is_complete "${a[2]}"; then
+			write_todo "$todo" "$filename"
+		elif todo_is_complete "$todo"; then
 			error "Todo already exists and is already complete. To add it anyway, add the -f Flag"
 		else
 			error "Todo already exists. To add it anyway, add the -f Flag"
 		fi
 	else
-		write_todo "$1" "$2"
+		write_todo "$todo" "$filename"
 	fi
 }
 
@@ -136,7 +142,7 @@ function write_todo()
         content=$(< $filename )
         echo "${content/"### $flag_value"/### $flag_value $todo_content}" > "$filename"
     else
-        echo "$todo_content" > "$filename"
+        echo "${content/"### General"/### General $todo_content}" > "$filename"
     fi
     success "Todo $1 successfully added"
 
@@ -144,16 +150,18 @@ function write_todo()
 
 function todo()
 {
+    todo="${a[2]}"
+    content=$(< $filename )
 	if [ -z $filename ] || [ -z "${a[2]}" ]; then
 		error "Filename and todo must be specified"
 	elif [ file_exists ]; then
 		create_sublist_from_flag $filename
-		add_todo "${a[2]}" $filename
+		add_todo
 	else
 		if flag_exists "-f" || flag_exists "--force"; then
 			create
 			create_sublist_from_flag $filename
-			add_todo "${a[2]}" $filename
+			add_todo
 		else
 			error "File does not exist. To force file creation, add the -f flag"
 		fi
@@ -176,7 +184,7 @@ function complete()
 		if todo_is_complete "${a[2]}"; then
 			error "Todo is already complete"
 		else
-			echo "${content/"- [ ] ${a[2]}"/- [x] ${a[2]} }" > "${a[1]}.md"
+			echo "${content/"- [ ] ${a[2]}"/- [x] ${a[2]} }" > "$filename"
 			success "${a[2]} marked as complete"
 		fi
 	else
@@ -340,7 +348,7 @@ function search()
     if flag_exists "-a" || flag_exists "--all"; then
         searchterm=${a[1]}
         for file in `ls .`; do
-            if [[ -f $file ]] && [ ${file: -3} == ".md" ]; then
+            if is_file $file && is_markdown $file; then
                 searchfile $file "$searchterm"
             fi
         done
@@ -401,33 +409,51 @@ function confirm_file_exists()
 
 function read_content()
 {
-    if [[ ${a[0]} != "publish" ]]; then
-        if [[ -z ${a[1]} ]]; then
-            help
-        else
-            if ! flag_exists "-a" && ! flag_exists "--all"; then
-                if [[ ${a[1]} != *".md" ]]; then
-                    filename=${a[1]}.md
-                else
-                    filename=${a[1]}
-                fi
+    if [[ ${a[0]} != "publish" ]] && ! flag_exists "-a" && ! flag_exists "--all"; then
+        set_file_name
 
-                if [[ file_exists ]]; then
-                    content=$(< $filename )
-                else
-                    error "File $filename does not exist"
-                fi
-            fi
+        if [[ file_exists ]]; then
+            content=$(< $filename )
+        else
+            error "File $filename does not exist"
         fi
     fi
 }
 
+function set_file_name()
+{
+        if [[ -z ${a[1]} ]]; then
+            help
+        elif [[ ${a[1]} != *".md" ]]; then
+            filename=${a[1]}.md
+        else
+            filename=${a[1]}
+        fi
+}
 function file_exists()
 {
     if [[ -a "$filename" ]]; then
         return 0
     fi
 
+    return 1
+
+}
+
+function is_file()
+{
+    if [[ -f "$1" ]]; then
+        return 0
+    fi
+
+    return 1
+}
+
+function is_markdown()
+{
+    if  [ ${file: -3} == ".md" ]; then
+        return 0
+    fi
     return 1
 
 }
