@@ -36,27 +36,6 @@ Gitodo supports sublists inside lists, as well as list/sublist creation, checkin
 - [x] Searching for a todo: 
 `gitodo search FileName "todo"`
 
-- [x] Publish a group of held todos: 
-`gitodo publish`
-
-#### Holding Files (The -h flag)
-By default gitodo will create a commit for each write action. These are triggered on `create`, `todo`,  `complete`, and `sublist` commands. If you would like to hold a group of changes to be committed at once, you can use the -h flag ( or --hold). The next writeable command will commit all the previously held commands into a single commit.
-
-**Example**
-
-```
-gitodo todo TestList "some cool Todo" -h
-gitodo todo TestList "another really neat todo" -h
-gitodo create NewList -s "Nifty Sublist" // This will commit itself and the two previous todos
-```
-
-If you've held a number of todos that you need to push to github, you can use the `publish` command.
-
-```
-gitodo todo TestList "some cool Todo" -h
-gitodo todo TestList "another really neat todo" -h
-gitodo publish // will push up prevoius two todos
-``` 
 #### Create list with different name than file
 By default gitodo will add a heading to a new list file equal to the name of the file. To use a custom heading for your new list file, you can use the `--list-name` flag. 
 

@@ -378,14 +378,8 @@ function searchfile()
         fi
 	done < "$1"
 }
-function write()
-{
-	if ! flag_exists "-h" && ! flag_exists "--hold"; then
-		publish
-	fi
-}
 
-function publish()
+function write()
 {
     set_commit_message
 
@@ -429,7 +423,7 @@ function confirm_file_exists()
 
 function read_content()
 {
-    if [[ ${a[0]} != "publish" ]] && ! flag_exists "-a" && ! flag_exists "--all"; then
+    if ! flag_exists "-a" && ! flag_exists "--all"; then
         set_file_name
 
         if ! file_exists && flag_exists "-f" || flag_exists "--force"; then
@@ -492,7 +486,7 @@ function is_markdown()
 }
 function help()
 {
-    echo $"Usage: $0 <create|todo|publish|search|remove|complete|show|sublist> [--open | --done]"
+    echo $"Usage: $0 <create|todo|search|remove|complete|show|sublist> [--open | --done]"
     echo ""
     echo "Examples:"
     echo "         gitodo create MyFile"
@@ -514,9 +508,6 @@ case $1 in
 		create
 		create_sublist_from_flag
 		write
-		;;
-	publish)
-		publish
 		;;
 	todo)
 		todo
