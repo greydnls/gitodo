@@ -19,9 +19,15 @@ function success()
 
 function create_file()
 {
+    if flag_exists "--list-name"; then
+        find_flag_index "--list-name"
+        list_name=$flag_value
+    else
+        list_name=${a[1]}
+    fi
 	echo "--gitodo--
 
-# ${a[1]}" >> "$filename"
+# $list_name" >> "$filename"
 	success "File $filename created"
 }
 
@@ -383,14 +389,12 @@ function publish()
 {
     set_commit_message
 
-    response=$(git stash)
     for file in `ls -ld $(find . -name '*.md')`; do
         if is_markdown $file && is_gitodo_file $file; then
             response=$(git add "${file}")
         fi
     done
     response=$(git commit -m "${commit_message}" && git push origin master)
-    response=$(git stash pop)
     exit
 }
 
@@ -438,15 +442,15 @@ function read_content()
 
 function set_file_name()
 {
-        if [[ -z ${a[1]} ]] || force_flag_is_set; then
-            if [[ ${a[1]} != *".md" ]]; then
-                filename=${a[1]}.md
-            else
-                filename=${a[1]}
-            fi
+    if [[ ${a[1]} != "" ]] || force_flag_is_set; then
+        if [[ ${a[1]} != *".md" ]]; then
+            filename=${a[1]}.md
         else
-            error "File $filename does not exist. To force creation, use the -f flag"
+            filename=${a[1]}
         fi
+    else
+        error "File $filename does not exist. To force creation, use the -f flag"
+    fi
 }
 
 function file_exists()

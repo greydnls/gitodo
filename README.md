@@ -57,7 +57,11 @@ gitodo todo TestList "some cool Todo" -h
 gitodo todo TestList "another really neat todo" -h
 gitodo publish // will push up prevoius two todos
 ``` 
+#### Create list with different name than file
+By default gitodo will add a heading to a new list file equal to the name of the file. To use a custom heading for your new list file, you can use the `--list-name` flag. 
 
+**Example**  
+`gitodo create Concerts --list-name "Rad Shows to go see"`
 
 #### Forcing (The -f flag)
 By default Gitodo will throw errors if you attempt to add a todo to a file that does not exist, or to a sublist that does not exist in a file. Adding the -f flag, (or --force) will suppress the errors and create the file or sublist as necessary.
@@ -135,6 +139,4 @@ Gitodo is not able to be used from inside any git repo you like.
 - [ ] Ability to have same todo on multiple sublists
 - [ ] Ability to publish a single file
 - [ ] Allow access to lists inside subfolders
-- [ ] Annotations on files to designate todo lists and differentiate them from other files
-- [ ] specify a list with differrent name than file
 
