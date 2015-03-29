@@ -19,8 +19,10 @@ function success()
 
 function create_file()
 {
-	echo "# $1" >> "$filename"
-	success "File $1.md created"
+	echo "--gitodo--
+
+# ${a[1]}" >> "$filename"
+	success "File $filename created"
 }
 
 function create_sublist()
@@ -28,7 +30,6 @@ function create_sublist()
     echo "
 
 ### $1" >> "$filename"
-
 		success "Added sublist $1 in list $filename"
 }
 
@@ -86,13 +87,12 @@ function create_sublist_from_flag()
 
 function create()
 {
-	if [ -z ${a[1]} ]; then
+	if [ -z $filename ]; then
 		error "File name must be specified"
 	elif file_exists; then
 		error "Requested File already exists."
 	fi
-	confirm_file_is_in_gitdir
-	create_file ${a[1]}
+	create_file
 }
 
 function todo_exists()
@@ -123,20 +123,20 @@ function write_todo()
 {
     if flag_exists "-l"; then
         find_flag_index "-l"
-        if [ -z "$flag_value" ]; then
+        if [ "$flag_value" != "" ]; then
              todo_content="
-- [ ] $1  "
+- [ ] $todo  "
         else
             todo_content="
-- [ ] [$1]($flag_value)  "
+- [ ] [$todo]($flag_value)  "
         fi
     else
         todo_content="
-- [ ] $1  "
+- [ ] $todo  "
     fi
 
+    content=$(< $filename )
     if flag_exists "-s"; then
-        content=$(< $filename )
         echo "${content/"### $flag_value"/### $flag_value $todo_content}" > "$filename"
     else
         echo "${content/"### General"/### General $todo_content}" > "$filename"
@@ -149,19 +149,13 @@ function todo()
 {
     todo="${a[2]}"
     content=$(< $filename )
-	if [ -z $filename ] || [ -z "${a[2]}" ]; then
+	if [[ -z "${a[1]}" ]] || [[ -z "${a[2]}" ]]; then
 		error "Filename and todo must be specified"
 	elif [ file_exists ]; then
-		create_sublist_from_flag $filename
+		create_sublist_from_flag
 		add_todo
-	else
-		if flag_exists "-f" || flag_exists "--force"; then
-			create
-			create_sublist_from_flag $filename
-			add_todo
-		else
-			error "File does not exist. To force file creation, add the -f flag"
-		fi
+    else
+        error "File does not exist. To force file creation, add the -f flag"
 	fi
 }
 
@@ -387,13 +381,37 @@ function write()
 
 function publish()
 {
-    commit_message=$(<"${TMPFILE}")
-    rm ${TMPFILE}
+    set_commit_message
+
     response=$(git pull origin master)
-    response=$(git add --all && git commit -m "${commit_message}" && git push origin master)
+    for file in `ls -ld $(find . -name '*.md')`; do
+        if is_markdown $file && is_gitodo_file $file; then
+            response=$(git add "${file}")
+        fi
+    done
+    response=$(git commit -m "${commit_message}" && git push origin master)
     exit
 }
 
+function set_commit_message
+{
+    if flag_exists "-m"; then
+        find_flag_index "-m"
+        commit_message=$flag_value
+    else
+        commit_message=$(<"${TMPFILE}")
+    fi
+    rm ${TMPFILE}
+}
+function is_gitodo_file
+{
+    first_line=$(head -n 1 $file)
+    if [[ "$first_line" == "--gitodo--" ]]; then
+        return 0
+    fi
+
+    return 1
+}
 # Check to see if the file containing your todo list exists and exits the script
 # with an error if it does not. As such, it is not suitable for use any time the
 # file existing is not a fatal error.
@@ -409,32 +427,45 @@ function read_content()
     if [[ ${a[0]} != "publish" ]] && ! flag_exists "-a" && ! flag_exists "--all"; then
         set_file_name
 
-        if [[ file_exists ]]; then
-            content=$(< $filename )
-        else
-            error "File $filename does not exist"
+        if ! file_exists && flag_exists "-f" || flag_exists "--force"; then
+            create_file
         fi
+
+        content=$(< $filename )
     fi
 }
 
 function set_file_name()
 {
-        if [[ -z ${a[1]} ]]; then
-            help
-        elif [[ ${a[1]} != *".md" ]]; then
-            filename=${a[1]}.md
+        if [[ -z ${a[1]} ]] || force_flag_is_set; then
+            if [[ ${a[1]} != *".md" ]]; then
+                filename=${a[1]}.md
+            else
+                filename=${a[1]}
+            fi
         else
-            filename=${a[1]}
+            error "File $filename does not exist. To force creation, use the -f flag"
         fi
 }
+
 function file_exists()
 {
     if [[ -a "$filename" ]]; then
+
         return 0
     fi
 
     return 1
 
+}
+
+function force_flag_is_set()
+{
+    if flag_exists "-f" || flag_exists "--force"; then
+        return 0
+    fi
+
+    return 1
 }
 
 function is_file()
@@ -448,7 +479,7 @@ function is_file()
 
 function is_markdown()
 {
-    if  [ ${file: -3} == ".md" ]; then
+    if  [[ ${file: -3} == ".md" ]]; then
         return 0
     fi
     return 1

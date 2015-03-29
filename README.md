@@ -39,7 +39,7 @@ Gitodo supports sublists inside lists, as well as list/sublist creation, checkin
 - [x] Publish a group of held todos: 
 `gitodo publish`
 
-#### The -h flag
+#### Holding Files (The -h flag)
 By default gitodo will create a commit for each write action. These are triggered on `create`, `todo`,  `complete`, and `sublist` commands. If you would like to hold a group of changes to be committed at once, you can use the -h flag ( or --hold). The next writeable command will commit all the previously held commands into a single commit.
 
 **Example**
@@ -59,10 +59,10 @@ gitodo publish // will push up prevoius two todos
 ``` 
 
 
-#### The -f flag
+#### Forcing (The -f flag)
 By default Gitodo will throw errors if you attempt to add a todo to a file that does not exist, or to a sublist that does not exist in a file. Adding the -f flag, (or --force) will suppress the errors and create the file or sublist as necessary.
 
-#### The -s flag
+#### Working with sublists (The -s flag)
 If you could like a command to pertain to a sublist only during either `show` or `todo` commands, you may add the -s flag with the list name to follow.
 
 **Example**: `gitodo show FileName -s "Sublist Name" `
@@ -73,7 +73,7 @@ If you would like to create a new Todo List with a sublist you can add the -s fl
 
 **With Custom Sublist:**  `gitodo create FileName -s "My Nifty List Name"`
 
-#### The -l flag
+#### Adding Links (The -l flag)
 If you would like to add a link to a todo, you can do that easily with the -l flag. 
 
 **Example**
@@ -84,11 +84,26 @@ gitodo todo SomeFileName "The Dutch" -l "http://thedutchnyc.com"
 **Will Result in:**  
 `- [ ] [The Dutch](http://thedutchnyc.com)`
 
-#### The -a flag
+#### Searching All files(The -a flag) 
 When searching for todos, you can add the `-a` or `--all` tag to search every .md file in the current directory. 
 
 **Example**  
 `gitodo search "Search Term" --all`
+
+### Custom Commit Messages (The -m flag)
+By default gitodo will compile commit messages detailing each step of the process. 
+
+**Example**
+
+`
+Added sublist General in list Books.md
+Todo Alice In Wonderland successfully added  
+`  
+
+If you would like to change that commit message, you can use the `-m` flag.   
+
+**Example**  
+`gitodo pubish -m "We're all mad here"`
 
 ###Installation
 Make gitodo executable, and move to a useable place.
@@ -117,5 +132,9 @@ Gitodo is not able to be used from inside any git repo you like.
 `gitodo move OldFileName --file NewFileName --list "list Name" `
 - [ ] remove sublist
 - [ ] complete sublist
-- [ ] add ability to have same todo on multiple sublists
-- [ ] Add ability to publish a single file
+- [ ] Ability to have same todo on multiple sublists
+- [ ] Ability to publish a single file
+- [ ] Allow access to lists inside subfolders
+- [ ] Annotations on files to designate todo lists and differentiate them from other files
+- [ ] specify a list with differrent name than file
+
