@@ -383,13 +383,14 @@ function publish()
 {
     set_commit_message
 
-    response=$(git pull origin master)
+    response=$(git stash)
     for file in `ls -ld $(find . -name '*.md')`; do
         if is_markdown $file && is_gitodo_file $file; then
             response=$(git add "${file}")
         fi
     done
     response=$(git commit -m "${commit_message}" && git push origin master)
+    response=$(git stash pop)
     exit
 }
 
